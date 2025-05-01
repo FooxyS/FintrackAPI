@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 )
@@ -13,7 +14,7 @@ type User struct {
 
 type UserData struct {
 	Email string `json:"email"`
-	User
+	User  `json:"user"`
 }
 
 type UserStore interface {
@@ -45,8 +46,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	//запись юзера в мапу
 	var users map[string]User
 
-	buf, errRead := os.ReadFile("data.json")
+	buf, errRead := os.ReadFile("C:/Users/FooxyS/Desktop/FintrackAPI/data/data.json")
 	if errRead != nil {
+		log.Printf("failed to read the file: %v\n", errRead)
 		http.Error(w, "failed to read the file", http.StatusInternalServerError)
 		return
 	}
