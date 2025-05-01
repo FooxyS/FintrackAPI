@@ -14,7 +14,7 @@ type User struct {
 
 type UserData struct {
 	Email string `json:"email"`
-	User  `json:"user"`
+	User  User   `json:"user"`
 }
 
 type UserStore interface {
@@ -38,13 +38,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//валидация данных пользователя
-	if user.Username == "" || user.Password == "" || user.Email == "" {
+	if user.User.Username == "" || user.User.Password == "" || user.Email == "" {
 		http.Error(w, "empty fields in json", http.StatusBadRequest)
 		return
 	}
 
 	//запись юзера в мапу
-	var users map[string]User
+	var users []UserData
 
 	buf, errRead := os.ReadFile("C:/Users/FooxyS/Desktop/FintrackAPI/data/data.json")
 	if errRead != nil {
@@ -54,15 +54,19 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	errUnmarsh := json.Unmarshal(buf, &users)
 	if errUnmarsh != nil {
+		log.Printf("failed to Unmarshal the file: %v\n", errUnmarsh)
 		http.Error(w, "failed to Unmarshal the file", http.StatusInternalServerError)
 		return
 	}
 
-	if _, ok := users[user.Email]; ok {
-		http.Error(w, "User is already created", http.StatusOK)
-		return
+	for _, curUser := range users {
+		if curUser.Email == user.Email {
+			http.Error(w, "User is already created", http.StatusOK)
+			return
+		}
 	}
-	users[user.Email] = user.User
+
+	users = append(users, user)
 
 	//кодирование мапы
 	compbuf, errMarsh := json.Marshal(users)
@@ -70,7 +74,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to marshal data", http.StatusInternalServerError)
 		return
 	}
-	os.WriteFile("data.json", compbuf, 0644)
+	os.WriteFile("C:/Users/FooxyS/Desktop/FintrackAPI/data/data.json", compbuf, 0644)
 
 	http.Error(w, "user is successfully created", http.StatusCreated)
 }
