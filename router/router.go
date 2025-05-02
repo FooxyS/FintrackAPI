@@ -9,5 +9,6 @@ import (
 func SetupRouter() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/register", handler.RegisterHandler)
+	mux.HandleFunc("/login", handler.UserLogin)
 	return mux
 }
