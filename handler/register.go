@@ -22,6 +22,21 @@ type UserStore interface {
 	Exists(username string) bool
 }
 
+func GetJson(w http.ResponseWriter, users *[]UserData) {
+	buf, errRead := os.ReadFile("C:/Users/FooxyS/Desktop/FintrackAPI/data/data.json")
+	if errRead != nil {
+		log.Printf("failed to read the file: %v\n", errRead)
+		http.Error(w, "failed to read the file", http.StatusInternalServerError)
+		return
+	}
+	errUnmarsh := json.Unmarshal(buf, &users)
+	if errUnmarsh != nil {
+		log.Printf("failed to Unmarshal the file: %v\n", errUnmarsh)
+		http.Error(w, "failed to Unmarshal the file", http.StatusInternalServerError)
+		return
+	}
+}
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	//проверка на правильный метод
 	if r.Method != http.MethodPost {
@@ -46,18 +61,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	//запись юзера в мапу
 	var users []UserData
 
-	buf, errRead := os.ReadFile("C:/Users/FooxyS/Desktop/FintrackAPI/data/data.json")
-	if errRead != nil {
-		log.Printf("failed to read the file: %v\n", errRead)
-		http.Error(w, "failed to read the file", http.StatusInternalServerError)
-		return
-	}
-	errUnmarsh := json.Unmarshal(buf, &users)
-	if errUnmarsh != nil {
-		log.Printf("failed to Unmarshal the file: %v\n", errUnmarsh)
-		http.Error(w, "failed to Unmarshal the file", http.StatusInternalServerError)
-		return
-	}
+	GetJson(w, &users)
 
 	for _, curUser := range users {
 		if curUser.Email == user.Email {
