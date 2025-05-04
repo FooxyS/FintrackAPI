@@ -3,13 +3,35 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func UserLogin(w http.ResponseWriter, r *http.Request) {
 	var users []UserData
 
-	GetJson(w, &users)
+	errEnv := godotenv.Load()
+	if errEnv != nil {
+		log.Fatal(errEnv)
+	}
+	path := os.Getenv("PATH_TO_JSON")
+
+	//GetJson(w, &users)
+	buf, errRead := os.ReadFile(path)
+	if errRead != nil {
+		log.Printf("failed to read the file: %v\n", errRead)
+		http.Error(w, "failed to read the file", http.StatusInternalServerError)
+		return
+	}
+	errUnmarsh := json.Unmarshal(buf, &users)
+	if errUnmarsh != nil {
+		log.Printf("failed to Unmarshal the file: %v\n", errUnmarsh)
+		http.Error(w, "failed to Unmarshal the file", http.StatusInternalServerError)
+		return
+	}
 
 	var user UserData
 	err := json.NewDecoder(r.Body).Decode(&user)
