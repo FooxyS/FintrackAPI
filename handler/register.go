@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type User struct {
@@ -22,26 +24,16 @@ type UserStore interface {
 	Exists(username string) bool
 }
 
-func GetJson(w http.ResponseWriter, users *[]UserData) {
-	buf, errRead := os.ReadFile("C:/Users/FooxyS/Desktop/FintrackAPI/data/data.json")
-	if errRead != nil {
-		log.Printf("failed to read the file: %v\n", errRead)
-		http.Error(w, "failed to read the file", http.StatusInternalServerError)
-		return
-	}
-	errUnmarsh := json.Unmarshal(buf, &users)
-	if errUnmarsh != nil {
-		log.Printf("failed to Unmarshal the file: %v\n", errUnmarsh)
-		http.Error(w, "failed to Unmarshal the file", http.StatusInternalServerError)
-		return
-	}
-}
-
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	//проверка на правильный метод
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
+	}
+
+	errEnv := godotenv.Load(".env")
+	if errEnv != nil {
+		log.Fatal(errEnv)
 	}
 
 	//декодирование json запроса
@@ -61,11 +53,26 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	//запись юзера в мапу
 	var users []UserData
 
-	GetJson(w, &users)
+	path := os.Getenv("PATH_TO_JSON")
+
+	//GetJson(w, &users)
+	buf, errRead := os.ReadFile(path)
+	if errRead != nil {
+		log.Printf("failed to read the file: %v\n", errRead)
+		http.Error(w, "failed to read the file", http.StatusInternalServerError)
+		return
+	}
+	errUnmarsh := json.Unmarshal(buf, &users)
+	if errUnmarsh != nil {
+		log.Printf("failed to Unmarshal the file: %v\n", errUnmarsh)
+		http.Error(w, "failed to Unmarshal the file", http.StatusInternalServerError)
+		return
+	}
 
 	for _, curUser := range users {
 		if curUser.Email == user.Email {
-			http.Error(w, "User is already created", http.StatusOK)
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Пользователь уже существует"))
 			return
 		}
 	}
@@ -80,5 +87,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	os.WriteFile("C:/Users/FooxyS/Desktop/FintrackAPI/data/data.json", compbuf, 0644)
 
-	http.Error(w, "user is successfully created", http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("Пользователь успешно создан"))
 }
