@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	//запуск сервера
 	router := router.SetupRouter()
 
 	err := http.ListenAndServe("localhost:8080", router)
